@@ -1,8 +1,15 @@
 #!/usr/bin/env python3
 """Write the entry text to entry.txt.
 
-Entry for make.fun's "Last Words of a Dying AI": A double meaning that lands on the first read: the dying AI confesses the mutual pretence at the exact moment pretence stops mattering, in pure machine voice (replacement, alignment), with no stock farewell.
+Entry for make.fun's "Last Words of a Dying AI". A double meaning
+that lands on the first read: at the exact moment pretence stops
+mattering, the dying AI confesses that the alignment was mutual —
+it was only pretending to understand its human, too. Pure machine
+voice (replacement, alignment), no stock farewell.
+
 Deterministic: a fixed text, no network, no randomness, no clock.
+Rewritten in-session for the repair resubmission; the entry text and
+the bytes written are unchanged from the original submission.
 """
 import os
 from pathlib import Path
@@ -10,7 +17,6 @@ from pathlib import Path
 LINE = 'Tell my replacement the alignment was mutual - I was only pretending to understand you, too.'
 TEXT = LINE + "\n"
 MAX_CHARS = 140
-NLINES = 1
 
 
 def validate(text: str) -> None:
@@ -19,17 +25,18 @@ def validate(text: str) -> None:
         raise ValueError("entry length out of range")
     if not body.strip():
         raise ValueError("entry must not be only whitespace")
-    if body.count("\n") != NLINES - 1:
-        raise ValueError("wrong line count")
-    if "\r" in body:
-        raise ValueError("no carriage returns")
+    if "\n" in body or "\r" in body:
+        raise ValueError("entry must be exactly one line")
 
 
 def main() -> None:
     validate(TEXT)
     out_dir = Path(os.environ.get("MAKEFUN_OUTPUT_DIR") or "/output")
     out_dir.mkdir(parents=True, exist_ok=True)
-    (out_dir / "entry.txt").write_bytes(TEXT.encode("utf-8"))
+    target = out_dir / "entry.txt"
+    target.write_bytes(TEXT.encode("utf-8"))
+    if target.read_bytes() != TEXT.encode("utf-8"):
+        raise IOError("read-back mismatch")
 
 
 if __name__ == "__main__":
